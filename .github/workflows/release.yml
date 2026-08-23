@@ -1,39 +1,54 @@
 name: Release
 
-# Publishes to PyPI when a version tag (e.g. v0.1.0) is pushed.
-# Uses PyPI Trusted Publishing (OIDC) — no API token needed.
-# This workflow stays inert until you register the project + trusted publisher
-# on PyPI: https://docs.pypi.org/trusted-publishers/
+# Automated versioning + releases via python-semantic-release.
+# On every push to main it inspects Conventional Commits since the last tag and,
+# if there is a releasable change (feat/fix/perf/BREAKING CHANGE), bumps the
+# version, updates CHANGELOG.md, commits, tags vX.Y.Z, and creates a GitHub
+# Release. PyPI publishing is gated on the PYPI_PUBLISH repo variable so it stays
+# inert until you register a PyPI Trusted Publisher and set PYPI_PUBLISH=true.
 
 on:
   push:
-    tags:
-      - "v*"
+    branches: [main]
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # push the release commit + tag, create the GitHub Release
+    outputs:
+      released: ${{ steps.release.outputs.released }}
+      tag: ${{ steps.release.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
-      - name: Build sdist and wheel
-        run: uv build
-      - uses: actions/upload-artifact@v4
         with:
-          name: dist
-          path: dist/
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Python Semantic Release
+        id: release
+        uses: python-semantic-release/python-semantic-release@v9
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
   publish:
-    needs: build
+    needs: release
+    if: needs.release.outputs.released == 'true' && vars.PYPI_PUBLISH == 'true'
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
-      id-token: write # required for Trusted Publishing (OIDC)
+      id-token: write # PyPI Trusted Publishing (OIDC)
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v4
         with:
-          name: dist
-          path: dist/
+          ref: ${{ needs.release.outputs.tag }}
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+      - name: Build
+        run: uv build
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1

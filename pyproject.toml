@@ -69,3 +69,22 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+# Automated versioning & releases driven by Conventional Commits.
+# See: https://python-semantic-release.readthedocs.io
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+version_variables = ["src/dbt_arch_unit/__init__.py:__version__"]
+# Building is done in the publish job (from the tag), not inside the PSR
+# container — so no build command runs here (empty = skip).
+build_command = ""
+commit_message = "chore(release): v{version} [skip ci]"
+tag_format = "v{version}"
+allow_zero_version = true
+
+[tool.semantic_release.changelog]
+mode = "update"
+insertion_flag = "<!-- version list -->"
+
+[tool.semantic_release.branches.main]
+match = "main"

@@ -81,10 +81,31 @@ Rules are small, self-contained functions registered by name. To add one:
 ## Commit & PR conventions
 
 - Keep PRs focused; one rule or fix per PR where possible.
-- Use clear, imperative commit messages (Conventional Commits style appreciated,
-  e.g. `feat(rules): add max-macro-depth`).
 - Ensure `ruff`, `mypy`, and `pytest` all pass.
-- Update `README.md` / `CHANGELOG.md` when behaviour or the rule catalog changes.
+- Update `README.md` when behaviour or the rule catalog changes. **Do not** edit
+  `CHANGELOG.md` — it is generated automatically (see below).
+
+### Commit messages drive releases
+
+This project uses [Conventional Commits](https://www.conventionalcommits.org)
+and [python-semantic-release](https://python-semantic-release.readthedocs.io).
+The commit type on `main` determines the next version and changelog entry — so
+**your commit message matters**:
+
+| Commit type                          | Release effect            |
+| ------------------------------------ | ------------------------- |
+| `fix: …`                             | patch (0.1.0 → 0.1.1)     |
+| `feat: …`                            | minor (0.1.0 → 0.2.0)     |
+| `feat!: …` or a `BREAKING CHANGE:` footer | major (0.1.0 → 1.0.0) |
+| `docs:` `chore:` `ci:` `refactor:` `test:` | no release          |
+
+On merge to `main`, the release workflow bumps the version in `pyproject.toml`
+and `src/dbt_arch_unit/__init__.py`, updates `CHANGELOG.md`, tags `vX.Y.Z`, and
+publishes a GitHub Release automatically. You can preview what would happen with:
+
+```bash
+uvx python-semantic-release version --print   # prints the next version, no changes
+```
 
 ## Reporting bugs / proposing rules
 
