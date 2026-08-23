@@ -1,0 +1,33 @@
+version: 1
+
+project:
+  dir: "."
+  manifest: "target/manifest.json"
+
+layers:
+  staging:   { paths: ["models/staging/**"],   prefixes: ["stg_"] }
+  marts:     { paths: ["models/marts/**"],      prefixes: ["fct_", "dim_"] }
+  reporting: { paths: ["models/reporting/**"],  prefixes: ["rpt_"] }
+
+defaults:
+  severity: error
+  include: ["models/**"]
+
+rules:
+  - name: layer-dependencies
+    config:
+      allow:
+        staging:   [source]
+        marts:     [staging, marts]
+        reporting: [marts]
+  - name: sources-only-in-staging
+  - name: layer-name-prefix
+  - name: model-has-description
+  - name: require-primary-key
+    include: ["models/marts/**"]
+  - name: no-select-star
+    exclude: ["models/staging/**"]
+  - name: max-joins
+    config: { max: 7 }
+  - name: source-freshness
+    severity: warning

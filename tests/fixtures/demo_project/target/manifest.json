@@ -1,0 +1,200 @@
+{
+  "metadata": { "dbt_schema_version": "https://schemas.getdbt.com/dbt/manifest/v12.json", "project_name": "demo" },
+  "nodes": {
+    "model.demo.stg_customers": {
+      "unique_id": "model.demo.stg_customers",
+      "name": "stg_customers",
+      "resource_type": "model",
+      "package_name": "demo",
+      "path": "staging/stg_customers.sql",
+      "original_file_path": "models/staging/stg_customers.sql",
+      "description": "Customer staging model",
+      "schema": "staging",
+      "tags": [],
+      "meta": {},
+      "columns": { "customer_id": { "name": "customer_id", "description": "Customer id", "data_type": "integer" } },
+      "config": { "materialized": "view", "enabled": true, "tags": [], "meta": {}, "schema": "staging", "contract": { "enforced": false } },
+      "depends_on": { "nodes": ["source.demo.raw.customers"], "macros": [] },
+      "raw_code": ""
+    },
+    "model.demo.stg_orders": {
+      "unique_id": "model.demo.stg_orders",
+      "name": "stg_orders",
+      "resource_type": "model",
+      "package_name": "demo",
+      "path": "staging/stg_orders.sql",
+      "original_file_path": "models/staging/stg_orders.sql",
+      "description": "",
+      "schema": "staging",
+      "tags": [],
+      "meta": {},
+      "columns": {},
+      "config": { "materialized": "table", "enabled": true, "tags": [], "meta": {}, "schema": "staging", "contract": { "enforced": false } },
+      "depends_on": { "nodes": ["source.demo.raw.orders"], "macros": [] },
+      "raw_code": ""
+    },
+    "model.demo.dim_customers": {
+      "unique_id": "model.demo.dim_customers",
+      "name": "dim_customers",
+      "resource_type": "model",
+      "package_name": "demo",
+      "path": "marts/dim_customers.sql",
+      "original_file_path": "models/marts/dim_customers.sql",
+      "description": "Customer dimension",
+      "schema": "marts",
+      "tags": ["governed"],
+      "meta": { "owner": "data-team" },
+      "columns": { "customer_id": { "name": "customer_id", "description": "The customer id", "data_type": "integer" } },
+      "config": { "materialized": "table", "enabled": true, "tags": ["governed"], "meta": { "owner": "data-team" }, "schema": "marts", "contract": { "enforced": true } },
+      "depends_on": { "nodes": ["model.demo.stg_customers"], "macros": [] },
+      "raw_code": ""
+    },
+    "model.demo.fct_orders": {
+      "unique_id": "model.demo.fct_orders",
+      "name": "fct_orders",
+      "resource_type": "model",
+      "package_name": "demo",
+      "path": "marts/fct_orders.sql",
+      "original_file_path": "models/marts/fct_orders.sql",
+      "description": "Order facts",
+      "schema": "marts",
+      "tags": [],
+      "meta": {},
+      "columns": {},
+      "config": { "materialized": "table", "enabled": true, "tags": [], "meta": {}, "schema": "marts", "contract": { "enforced": false } },
+      "depends_on": { "nodes": ["model.demo.stg_orders", "model.demo.dim_customers", "source.demo.raw.orders"], "macros": [] },
+      "raw_code": ""
+    },
+    "model.demo.orders_summary": {
+      "unique_id": "model.demo.orders_summary",
+      "name": "orders_summary",
+      "resource_type": "model",
+      "package_name": "demo",
+      "path": "marts/orders_summary.sql",
+      "original_file_path": "models/marts/orders_summary.sql",
+      "description": "Order summary",
+      "schema": null,
+      "tags": [],
+      "meta": {},
+      "columns": {},
+      "config": { "materialized": "table", "enabled": true, "tags": [], "meta": {}, "schema": null, "contract": { "enforced": false } },
+      "depends_on": { "nodes": ["model.demo.fct_orders"], "macros": [] },
+      "raw_code": ""
+    },
+    "model.demo.rpt_revenue": {
+      "unique_id": "model.demo.rpt_revenue",
+      "name": "rpt_revenue",
+      "resource_type": "model",
+      "package_name": "demo",
+      "path": "reporting/rpt_revenue.sql",
+      "original_file_path": "models/reporting/rpt_revenue.sql",
+      "description": "Revenue report",
+      "schema": "reporting",
+      "tags": [],
+      "meta": {},
+      "columns": {},
+      "config": { "materialized": "incremental", "enabled": true, "tags": [], "meta": {}, "schema": "reporting", "contract": { "enforced": false } },
+      "depends_on": { "nodes": ["model.demo.stg_orders"], "macros": [] },
+      "raw_code": ""
+    },
+    "test.demo.unique_stg_customers_customer_id": {
+      "unique_id": "test.demo.unique_stg_customers_customer_id",
+      "name": "unique_stg_customers_customer_id",
+      "resource_type": "test",
+      "package_name": "demo",
+      "original_file_path": "models/staging/_staging.yml",
+      "column_name": "customer_id",
+      "test_metadata": { "name": "unique", "kwargs": { "column_name": "customer_id" } },
+      "depends_on": { "nodes": ["model.demo.stg_customers"], "macros": [] }
+    },
+    "test.demo.not_null_stg_customers_customer_id": {
+      "unique_id": "test.demo.not_null_stg_customers_customer_id",
+      "name": "not_null_stg_customers_customer_id",
+      "resource_type": "test",
+      "package_name": "demo",
+      "original_file_path": "models/staging/_staging.yml",
+      "column_name": "customer_id",
+      "test_metadata": { "name": "not_null", "kwargs": { "column_name": "customer_id" } },
+      "depends_on": { "nodes": ["model.demo.stg_customers"], "macros": [] }
+    },
+    "test.demo.unique_dim_customers_customer_id": {
+      "unique_id": "test.demo.unique_dim_customers_customer_id",
+      "name": "unique_dim_customers_customer_id",
+      "resource_type": "test",
+      "package_name": "demo",
+      "original_file_path": "models/marts/_marts.yml",
+      "column_name": "customer_id",
+      "test_metadata": { "name": "unique", "kwargs": { "column_name": "customer_id" } },
+      "depends_on": { "nodes": ["model.demo.dim_customers"], "macros": [] }
+    },
+    "test.demo.not_null_dim_customers_customer_id": {
+      "unique_id": "test.demo.not_null_dim_customers_customer_id",
+      "name": "not_null_dim_customers_customer_id",
+      "resource_type": "test",
+      "package_name": "demo",
+      "original_file_path": "models/marts/_marts.yml",
+      "column_name": "customer_id",
+      "test_metadata": { "name": "not_null", "kwargs": { "column_name": "customer_id" } },
+      "depends_on": { "nodes": ["model.demo.dim_customers"], "macros": [] }
+    }
+  },
+  "sources": {
+    "source.demo.raw.customers": {
+      "unique_id": "source.demo.raw.customers",
+      "name": "customers",
+      "source_name": "raw",
+      "resource_type": "source",
+      "original_file_path": "models/staging/_sources.yml",
+      "description": "Raw customers",
+      "schema": "raw",
+      "loaded_at_field": "_loaded_at",
+      "freshness": { "warn_after": { "count": 24, "period": "hour" }, "error_after": null },
+      "columns": {}
+    },
+    "source.demo.raw.orders": {
+      "unique_id": "source.demo.raw.orders",
+      "name": "orders",
+      "source_name": "raw",
+      "resource_type": "source",
+      "original_file_path": "models/staging/_sources.yml",
+      "description": "Raw orders",
+      "schema": "raw",
+      "loaded_at_field": null,
+      "freshness": null,
+      "columns": {}
+    }
+  },
+  "exposures": {
+    "exposure.demo.orders_dashboard": {
+      "unique_id": "exposure.demo.orders_dashboard",
+      "name": "orders_dashboard",
+      "resource_type": "exposure",
+      "type": "dashboard",
+      "owner": { "name": "Analytics", "email": "analytics@demo.io" },
+      "depends_on": { "nodes": ["model.demo.fct_orders"], "macros": [] }
+    },
+    "exposure.demo.broken_dashboard": {
+      "unique_id": "exposure.demo.broken_dashboard",
+      "name": "broken_dashboard",
+      "resource_type": "exposure",
+      "type": "dashboard",
+      "owner": {},
+      "depends_on": { "nodes": ["model.demo.does_not_exist"], "macros": [] }
+    }
+  },
+  "unit_tests": {
+    "unit_test.demo.test_dim_customers": {
+      "unique_id": "unit_test.demo.test_dim_customers",
+      "name": "test_dim_customers",
+      "model": "model.demo.dim_customers",
+      "depends_on": { "nodes": ["model.demo.dim_customers"], "macros": [] }
+    }
+  },
+  "disabled": {
+    "model.demo.deprecated_model": [
+      { "resource_type": "model", "unique_id": "model.demo.deprecated_model", "name": "deprecated_model", "original_file_path": "models/marts/deprecated_model.sql" }
+    ]
+  },
+  "child_map": {},
+  "parent_map": {}
+}

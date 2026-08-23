@@ -1,0 +1,62 @@
+name: 📐 New rule proposal
+description: Propose a new architecture/convention rule for dbt projects
+labels: ["rule-proposal"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Rules are small functions that check a dbt project against a convention.
+        See CONTRIBUTING.md for how they're implemented.
+  - type: input
+    id: name
+    attributes:
+      label: Proposed rule name
+      placeholder: "e.g. max-macro-depth"
+    validations:
+      required: true
+  - type: textarea
+    id: enforces
+    attributes:
+      label: What does it enforce?
+      description: The convention/best practice and why it matters.
+    validations:
+      required: true
+  - type: dropdown
+    id: source
+    attributes:
+      label: Data source
+      description: Where the check gets its information.
+      options:
+        - manifest (manifest.json)
+        - file (raw .sql/.yml)
+        - both
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - dependencies
+        - naming
+        - testing
+        - documentation
+        - style
+        - materialization
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Configuration options
+      description: Any `config:` keys the rule should accept (name + default).
+      placeholder: "max: maximum allowed value (default: 5)"
+    validations:
+      required: false
+  - type: textarea
+    id: example
+    attributes:
+      label: Example that should fail
+      render: sql
+    validations:
+      required: false

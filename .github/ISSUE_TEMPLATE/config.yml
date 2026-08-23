@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Questions & discussions
+    url: https://github.com/dardanxh/dbt-arch-unit/discussions
+    about: Ask questions, share setups, and discuss ideas here.
+  - name: 📖 Documentation
+    url: https://github.com/dardanxh/dbt-arch-unit#readme
+    about: Read the README and rule catalog first.
