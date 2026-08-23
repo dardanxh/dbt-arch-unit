@@ -6,6 +6,19 @@ from [Conventional Commits](https://www.conventionalcommits.org) — do not edit
 
 <!-- version list -->
 
+## v0.1.1 (2026-08-23)
+
+### Bug Fixes
+
+- Ship py.typed marker for PEP 561 type support
+  ([`6d9635d`](https://github.com/dardanxh/dbt-arch-unit/commit/6d9635dba8d9cb7885e33f54de1072b5bd5e3ae5))
+
+The package declares "Typing :: Typed" but shipped no py.typed marker, so downstream type checkers
+  ignored dbt-arch-unit's inline types. Add the marker so consumers pick up the annotations.
+
+Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
+
+
 ## v0.1.0 (2026-08-23)
 
 ### Continuous Integration
