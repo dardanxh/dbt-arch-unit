@@ -14,12 +14,9 @@ defaults:
   include: ["models/**"]
 
 rules:
-  - name: layer-dependencies
+  - name: test-dependencies
     config:
-      allow:
-        staging:   [source]
-        marts:     [staging, marts]
-        reporting: [marts]
+      allow: ["source > staging > marts > reporting", "marts > marts"]
   - name: sources-only-in-staging
   - name: layer-name-prefix
   - name: model-has-description

@@ -159,7 +159,10 @@ def render_config(model_path: str, layers: dict[str, list[str]]) -> str:
             f'  {name}: {{ paths: ["{model_path}/{name}/**"], prefixes: [{prefix_str}] }}'
         )
     layer_block = "\n".join(layer_lines)
-    return _HEADER.format(model_path=model_path, layers=layer_block) + _RULES
+    chain = "source > " + " > ".join(layers)
+    return _HEADER.format(model_path=model_path, layers=layer_block) + _RULES.replace(
+        "{chain}", chain
+    )
 
 
 _HEADER = """# dbt_arch_unit.yaml — architectural rules for this dbt project.
@@ -184,13 +187,12 @@ defaults:
 _RULES = """
 rules:
   # --- Layering & dependencies ---------------------------------------------
-  - name: layer-dependencies
+  - name: test-dependencies
     config:
-      allow:
-        staging:      [source]
-        intermediate: [staging, intermediate]
-        marts:        [staging, intermediate, marts]
-        reporting:    [marts]
+      # Flow chains: data moves left -> right, so "a > b" lets b depend on a.
+      # Adjacent only — add "staging > marts" to allow a skip, "marts > marts" for same-layer refs.
+      allow: ["{chain}"]
+      deny: []
   - name: sources-only-in-staging
   - name: staging-one-source
   - name: no-orphan-models

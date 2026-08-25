@@ -3,11 +3,29 @@ from __future__ import annotations
 M = "model.demo."
 
 
-def test_layer_dependencies(run):
-    allow = {"staging": ["source"], "marts": ["staging", "marts"], "reporting": ["marts"]}
-    got = run("layer-dependencies", config={"allow": allow})
+def test_dependencies_allow(run):
+    allow = ["source > staging > marts > reporting", "marts > marts"]
+    got = run("test-dependencies", config={"allow": allow})
     # reporting reads staging; marts (fct_orders) reads a source directly
     assert got == {M + "rpt_revenue", M + "fct_orders"}
+
+
+def test_dependencies_deny(run):
+    # blacklist mode: only the denied edge is a violation, everything else is fine
+    got = run("test-dependencies", config={"deny": ["staging > marts"]})
+    assert got == {M + "dim_customers", M + "fct_orders"}
+
+
+def test_dependencies_deny_overrides_allow(run):
+    # dim_customers is allowed by the chain but denied explicitly -> deny wins
+    got = run(
+        "test-dependencies",
+        config={
+            "allow": ["source > staging > marts > reporting", "marts > marts"],
+            "deny": ["staging > marts"],
+        },
+    )
+    assert got == {M + "dim_customers", M + "fct_orders", M + "rpt_revenue"}
 
 
 def test_sources_only_in_staging(run):

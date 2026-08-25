@@ -37,7 +37,7 @@ def test_check_warn_only_exits_zero():
 def test_list_rules():
     result = runner.invoke(app, ["list-rules"])
     assert result.exit_code == 0
-    assert "layer-dependencies" in result.stdout
+    assert "test-dependencies" in result.stdout
 
 
 def test_explain():
@@ -52,7 +52,7 @@ def test_init_writes_config_for_dbt_project(tmp_path):
     assert result.exit_code == 0
     assert target.exists()
     text = target.read_text()
-    assert "layer-dependencies" in text
+    assert "test-dependencies" in text
     # layers auto-detected from the fixture's models/ subfolders
     assert "staging:" in text and "marts:" in text
 

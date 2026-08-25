@@ -36,7 +36,7 @@ def test_render_config_is_valid_yaml():
     parsed = yaml.safe_load(text)
     assert parsed["version"] == 1
     assert parsed["layers"]["marts"]["prefixes"] == ["fct_", "dim_"]
-    assert any(r["name"] == "layer-dependencies" for r in parsed["rules"])
+    assert any(r["name"] == "test-dependencies" for r in parsed["rules"])
 
 
 def test_render_config_defaults_when_no_layers():

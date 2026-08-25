@@ -19,22 +19,44 @@ def _source_parents(node: Node) -> list[str]:
     return [p for p in node.depends_on.nodes if p.startswith("source.")]
 
 
+def _edges(chains: list[str]) -> set[tuple[str, str]]:
+    """Parse 'a > b > c' flow chains into adjacent (upstream, downstream) edges.
+
+    Data flows left -> right, so an edge (a, b) means 'b may depend on a'.
+    """
+    out: set[tuple[str, str]] = set()
+    for chain in chains:
+        toks = [t.strip() for t in chain.split(">") if t.strip()]
+        out.update(zip(toks, toks[1:], strict=False))
+    return out
+
+
 @register(
-    "layer-dependencies",
+    "test-dependencies",
     "dependencies",
-    "Each layer may only depend on an allow-listed set of layers.",
-    config_keys={"allow": "map of layer -> list of layers it may depend on"},
+    "Layer dependencies must follow allow-listed flow chains (and avoid denied ones).",
+    config_keys={
+        "allow": "list of 'a > b > c' flow chains a layer may depend on (adjacent only)",
+        "deny": "list of 'a > b' flow chains that are forbidden",
+    },
 )
-def layer_dependencies(ctx: ProjectContext, rule: RuleConfig) -> Iterable[Violation]:
-    allow: dict[str, list[str]] = rule.config.get("allow", {})
+def test_dependencies(ctx: ProjectContext, rule: RuleConfig) -> Iterable[Violation]:
+    allow_edges = _edges(rule.config.get("allow", []))
+    deny_edges = _edges(rule.config.get("deny", []))
+    if not allow_edges and not deny_edges:
+        return
     for model in ctx.models_for(rule):
         layer = ctx.layer_of_node(model)
-        if layer is None or layer not in allow:
+        if layer is None:
             continue
-        allowed = set(allow[layer])
         for parent in model.depends_on.nodes:
             player = ctx.layer_for_id(parent)
-            if player and player not in allowed:
+            if player is None:
+                continue
+            edge = (player, layer)  # parent flows into model: 'player > layer'
+            denied = edge in deny_edges
+            not_allowed = bool(allow_edges) and edge not in allow_edges
+            if denied or not_allowed:
                 yield ctx.violation(
                     rule, model, f"'{layer}' model depends on '{player}' ({parent})"
                 )

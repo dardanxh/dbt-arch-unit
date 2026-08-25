@@ -21,12 +21,12 @@ layers:
   reporting: { paths: ["models/reporting/**"],  prefixes: ["rpt_"] }
 
 rules:
-  - name: layer-dependencies
+  - name: test-dependencies
     config:
-      allow:
-        staging:   [source]
-        marts:     [staging, marts]
-        reporting: [marts]
+      # Flow chains: data moves left -> right, so "a > b" lets b depend on a.
+      # Adjacent only — list a skip ("staging > reporting") or same-layer ("marts > marts") explicitly.
+      allow: ["source > staging > marts > reporting", "marts > marts"]
+      deny: []   # blacklist edges; deny always wins over allow
   - name: max-lines-of-code
     config: { max: 200 }
   - name: require-primary-key
@@ -39,7 +39,7 @@ dbt-arch-unit check          # run all configured rules, exit 1 on violations
 dbt-arch-unit check --json   # machine-readable output for CI
 dbt-arch-unit report -o report.html --open   # full HTML report + open it
 dbt-arch-unit list-rules     # every available rule
-dbt-arch-unit explain layer-dependencies
+dbt-arch-unit explain test-dependencies
 dbt-arch-unit init           # validate this is a dbt project, then scaffold config
 ```
 
