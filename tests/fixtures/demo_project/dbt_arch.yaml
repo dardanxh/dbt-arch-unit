@@ -1,0 +1,29 @@
+version: 1
+
+project:
+  dir: "."
+  manifest: "target/manifest.json"
+
+layers:
+  staging:   { paths: ["models/staging/**"],   prefixes: ["stg_"] }
+  marts:     { paths: ["models/marts/**"],      prefixes: ["fct_", "dim_"] }
+  reporting: { paths: ["models/reporting/**"],  prefixes: ["rpt_"] }
+
+defaults:
+  severity: error
+  include: ["models/**"]
+
+rules:
+  - name: expect-dependencies
+    allow: ["source > staging > marts > reporting", "marts > marts"]
+  - name: expect-sources-single-reader
+  - name: expect-layer-name-prefix
+  - name: expect-model-has-description
+  - name: expect-primary-key
+    scope: [marts]
+  - name: expect-no-select-star
+    ignore: [staging]
+  - name: expect-max-joins
+    max: 7
+  - name: expect-source-freshness
+    severity: warning

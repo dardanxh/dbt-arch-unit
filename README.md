@@ -11,27 +11,44 @@
 Like [ArchUnit](https://www.archunit.org/) for Java or
 [import-linter](https://github.com/seddonym/import-linter) for Python — but for
 dbt. Declare the architecture your team already agreed on in a single
-`dbt_arch_unit.yaml`, and enforce it in CI and pre-commit.
+`dbt_arch.yaml`, and enforce it in CI and pre-commit.
 
 ```yaml
-# dbt_arch_unit.yaml  (next to dbt_project.yml)
+# dbt_arch.yaml  (next to dbt_project.yml)
 layers:
   staging:   { paths: ["models/staging/**"],   prefixes: ["stg_"] }
   marts:     { paths: ["models/marts/**"],      prefixes: ["fct_", "dim_"] }
   reporting: { paths: ["models/reporting/**"],  prefixes: ["rpt_"] }
 
 rules:
-  - name: test-dependencies
-    config:
-      # Flow chains: data moves left -> right, so "a > b" lets b depend on a.
-      # Adjacent only — list a skip ("staging > reporting") or same-layer ("marts > marts") explicitly.
-      allow: ["source > staging > marts > reporting", "marts > marts"]
-      deny: []   # blacklist edges; deny always wins over allow
-  - name: max-lines-of-code
-    config: { max: 200 }
-  - name: require-primary-key
-    include: ["models/marts/**"]
+  - name: expect-dependencies
+    # Flow chains: data moves left -> right, so "a > b" lets b depend on a.
+    # Adjacent only — list a skip ("staging > reporting") or same-layer ("marts > marts") explicitly.
+    allow: ["source > staging > marts > reporting", "marts > marts"]
+    deny: []   # blacklist edges; deny always wins over allow
+  - name: expect-max-lines-of-code
+    max: 200
+  - name: expect-primary-key
+    scope: [marts]          # run this test only on the marts layer
+  - name: expect-no-select-star
+    ignore: [staging]       # run everywhere except staging
+  - name: expect-model-name-convention
+    case: snake_case        # or kebab-case / camelCase; also max_length / prefix / suffix
+  - name: expect-comments
+    forbid: ["TODO", "FIXME"]   # allowed: true by default; also max_length / allow_block
+  - name: expect-min-tests-per-model    # every model needs ≥ N data tests (min:1 = "has any")
+    min: 1
+  - name: expect-min-tests-per-source   # every source needs ≥ N data tests
+    min: 1
+  - name: expect-max-models-per-layer
+    max: 20
+    scope: [reporting]           # keep certain layers intentionally small
 ```
+
+Every rule accepts `scope: [layers]` (run only on these layers) and
+`ignore: [layers]` (run everywhere except these) — layer-based selectors, distinct
+from the path-glob `include:` / `exclude:`. Rule params like `max` are written
+inline; the older `config: { max: 200 }` form still works.
 
 ```bash
 # after `dbt parse` (produces target/manifest.json)
@@ -39,7 +56,7 @@ dbt-arch-unit check          # run all configured rules, exit 1 on violations
 dbt-arch-unit check --json   # machine-readable output for CI
 dbt-arch-unit report -o report.html --open   # full HTML report + open it
 dbt-arch-unit list-rules     # every available rule
-dbt-arch-unit explain test-dependencies
+dbt-arch-unit explain expect-dependencies
 dbt-arch-unit init           # validate this is a dbt project, then scaffold config
 ```
 
@@ -76,6 +93,32 @@ repos:
       - id: dbt-arch-unit
 ```
 
+## Severity & CI
+
+Every rule has a severity — `error` (default) or `warning`. Set it per rule, or change the
+project-wide default:
+
+```yaml
+defaults:
+  severity: error          # applied to any rule that doesn't set its own
+
+rules:
+  - name: expect-no-select-star        # error (inherits the default)
+  - name: expect-min-tests-per-model
+    severity: warning                # reported, but never fails CI
+```
+
+`dbt-arch-unit check` exits **1** if there is **at least one error-severity violation**, and
+**0** otherwise — warnings alone never fail the job. Run it in CI right after `dbt parse`:
+
+```yaml
+# .github/workflows/ci.yml
+- run: dbt parse                 # produces target/manifest.json
+- run: dbt-arch-unit check       # non-zero exit on any error -> job fails
+```
+
+Use `dbt-arch-unit check --warn-only` to always exit 0 (report without failing).
+
 ## How it works
 
 Hybrid parsing: `target/manifest.json` supplies the accurate dependency graph,
@@ -94,7 +137,7 @@ project before writing anything:
 
 If the required checks fail, **no file is written** and it exits non-zero. On
 success it auto-detects your `models/` layer folders (staging, intermediate,
-marts, reporting, …) and writes a `dbt_arch_unit.yaml` tailored to them.
+marts, reporting, …) and writes a `dbt_arch.yaml` tailored to them.
 
 ```bash
 dbt-arch-unit init                          # inspect ./ and scaffold
@@ -120,7 +163,7 @@ dbt-arch-unit check --html report.html                    # table + report in on
 
 ## Rule catalog
 
-**38 rules** across six categories — dependencies, naming, testing,
+**41 rules** across six categories — dependencies, naming, testing,
 documentation, style, and materialization governance. Run `dbt-arch-unit
 list-rules` to see them all, or `dbt-arch-unit explain <rule>` for details and
 config keys.

@@ -1,4 +1,4 @@
-"""Pydantic contract for dbt_arch_unit.yaml and its loader."""
+"""Pydantic contract for dbt_arch.yaml and its loader."""
 
 from __future__ import annotations
 
@@ -6,11 +6,27 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from dbt_arch_unit.violation import Severity
 
-CONFIG_FILENAME = "dbt_arch_unit.yaml"
+CONFIG_FILENAME = "dbt_arch.yaml"
+
+# Keys handled by RuleConfig itself; anything else on a rule entry is rule-specific
+# config and gets folded into `config`.
+_RESERVED_RULE_KEYS = frozenset(
+    {
+        "name",
+        "severity",
+        "include",
+        "exclude",
+        "scope",
+        "ignore",
+        "tags",
+        "resource_types",
+        "config",
+    }
+)
 
 
 class ConfigError(Exception):
@@ -21,6 +37,10 @@ class ProjectSettings(BaseModel):
     dir: str = "."
     manifest: str = "target/manifest.json"
     models_path: str = "models"
+    # Any model whose path isn't matched by an explicit `layers:` entry takes its
+    # layer name from its top-level folder under models_path. Set false to only
+    # recognise explicitly-declared layers.
+    auto_layers: bool = True
 
 
 class LayerDef(BaseModel):
@@ -39,12 +59,30 @@ class RuleConfig(BaseModel):
 
     name: str
     severity: Severity | None = None
-    include: list[str] | None = None
-    exclude: list[str] | None = None
-    layers: list[str] | None = None
+    include: list[str] | None = None  # path globs
+    exclude: list[str] | None = None  # path globs
+    scope: list[str] | None = None  # run only on these layers
+    ignore: list[str] | None = None  # run on every layer except these
     tags: list[str] | None = None
     resource_types: list[str] | None = None
     config: dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _fold_inline_config(cls, data: Any) -> Any:
+        """Allow rule params as inline YAML keys, not just under `config:`.
+
+        `- name: max-lines-of-code` / `max: 200` is equivalent to the older
+        `config: { max: 200 }`. Inline keys win if both are present.
+        """
+        if not isinstance(data, dict):
+            return data
+        inline = {k: v for k, v in data.items() if k not in _RESERVED_RULE_KEYS}
+        if not inline:
+            return data
+        rest = {k: v for k, v in data.items() if k in _RESERVED_RULE_KEYS}
+        rest["config"] = {**(data.get("config") or {}), **inline}
+        return rest
 
 
 class ArchUnitConfig(BaseModel):
@@ -66,7 +104,7 @@ class ArchUnitConfig(BaseModel):
 
 
 def find_config(start: Path) -> Path | None:
-    """Search `start` and its parents for dbt_arch_unit.yaml."""
+    """Search `start` and its parents for dbt_arch.yaml."""
     start = start.resolve()
     for directory in [start, *start.parents]:
         candidate = directory / CONFIG_FILENAME

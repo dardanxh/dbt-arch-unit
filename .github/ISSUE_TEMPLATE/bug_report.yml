@@ -16,7 +16,7 @@ body:
     id: repro
     attributes:
       label: Steps to reproduce
-      description: Commands run, relevant `dbt_arch_unit.yaml` snippet, and any model SQL.
+      description: Commands run, relevant `dbt_arch.yaml` snippet, and any model SQL.
       render: shell
     validations:
       required: true

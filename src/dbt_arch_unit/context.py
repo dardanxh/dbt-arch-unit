@@ -82,7 +82,22 @@ class ProjectContext:
         for name, layer in self.config.layers.items():
             if any(self._match(p, path) for p in layer.paths):
                 return name
+        if self.config.project.auto_layers:
+            return self._folder_layer(path)
         return None
+
+    def _folder_layer(self, path: str) -> str | None:
+        """Derive a layer name from the top folder under models_path.
+
+        e.g. 'models/datamart/fact_x.sql' -> 'datamart'. Models sitting directly
+        in models_path (no subfolder) have no layer.
+        """
+        prefix = self.config.project.models_path.strip("/") + "/"
+        normalized = path.replace("\\", "/")
+        if not normalized.startswith(prefix):
+            return None
+        rest = normalized[len(prefix) :].split("/")
+        return rest[0] if len(rest) >= 2 else None
 
     def layer_of_node(self, node: Node) -> str | None:
         return self.layer_of_path(node.original_file_path)
@@ -109,7 +124,10 @@ class ProjectContext:
                 continue
             if any(self._match(p, path) for p in exclude):
                 continue
-            if rule.layers and self.layer_of_node(node) not in rule.layers:
+            layer = self.layer_of_node(node)
+            if rule.scope and layer not in rule.scope:
+                continue
+            if rule.ignore and layer in rule.ignore:
                 continue
             if rule.tags and not (set(rule.tags) & self._node_tags(node)):
                 continue

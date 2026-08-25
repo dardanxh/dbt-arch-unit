@@ -11,7 +11,7 @@ from dbt_arch_unit.violation import Violation
 
 
 @register(
-    "min-tests-per-model",
+    "expect-min-tests-per-model",
     "testing",
     "Every model must have at least N data tests.",
     config_keys={"min": "minimum number of data tests per model (default: 1)"},
@@ -25,7 +25,26 @@ def min_tests_per_model(ctx: ProjectContext, rule: RuleConfig) -> Iterable[Viola
 
 
 @register(
-    "require-primary-key",
+    "expect-min-tests-per-source",
+    "testing",
+    "Every source must have at least N data tests.",
+    config_keys={"min": "minimum number of data tests per source (default: 1)"},
+)
+def min_tests_per_source(ctx: ProjectContext, rule: RuleConfig) -> Iterable[Violation]:
+    minimum = rule.config.get("min", 1)
+    for src in ctx.sources:
+        count = len(ctx.tests_by_model.get(src.unique_id, []))
+        if count < minimum:
+            yield ctx.violation(
+                rule,
+                src,
+                f"source '{src.source_name}.{src.name}' has {count} tests, "
+                f"requires at least {minimum}",
+            )
+
+
+@register(
+    "expect-primary-key",
     "testing",
     "Every model must have a unique + not_null pair defining its primary key.",
 )
@@ -38,7 +57,7 @@ def require_primary_key(ctx: ProjectContext, rule: RuleConfig) -> Iterable[Viola
 
 
 @register(
-    "require-unit-tests",
+    "expect-unit-tests",
     "testing",
     "Models in scope must have at least one dbt unit test.",
     config_keys={"min": "minimum number of unit tests (default: 1)"},
@@ -52,7 +71,7 @@ def require_unit_tests(ctx: ProjectContext, rule: RuleConfig) -> Iterable[Violat
 
 
 @register(
-    "source-freshness",
+    "expect-source-freshness",
     "testing",
     "Every source must configure freshness (and a loaded_at_field).",
     source="manifest",
@@ -72,7 +91,7 @@ def source_freshness(ctx: ProjectContext, rule: RuleConfig) -> Iterable[Violatio
 
 
 @register(
-    "no-disabled-nodes",
+    "expect-no-disabled-nodes",
     "testing",
     "No disabled models should linger in the project.",
 )
@@ -90,7 +109,7 @@ def no_disabled_nodes(ctx: ProjectContext, rule: RuleConfig) -> Iterable[Violati
 
 
 @register(
-    "require-contract",
+    "expect-contract",
     "testing",
     "Models in scope must enforce a data contract.",
 )

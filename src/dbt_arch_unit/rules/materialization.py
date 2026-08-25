@@ -11,7 +11,7 @@ from dbt_arch_unit.violation import Violation
 
 
 @register(
-    "materialization-by-layer",
+    "expect-materialization-by-layer",
     "materialization",
     "Each layer must use an allow-listed materialization.",
     config_keys={"allow": "map of layer -> list of allowed materializations"},
@@ -28,7 +28,7 @@ def materialization_by_layer(ctx: ProjectContext, rule: RuleConfig) -> Iterable[
 
 
 @register(
-    "incremental-requires-keys",
+    "expect-incremental-keys",
     "materialization",
     "Incremental models must set unique_key and on_schema_change.",
     config_keys={"require": "config keys that must be set (default: unique_key, on_schema_change)"},
@@ -45,7 +45,7 @@ def incremental_requires_keys(ctx: ProjectContext, rule: RuleConfig) -> Iterable
 
 
 @register(
-    "require-tags-by-layer",
+    "expect-tags-by-layer",
     "materialization",
     "Models in a layer must carry the layer's required tags.",
     config_keys={"required": "map of layer -> list of tags every model must have"},
@@ -63,7 +63,7 @@ def require_tags_by_layer(ctx: ProjectContext, rule: RuleConfig) -> Iterable[Vio
 
 
 @register(
-    "custom-schema-required",
+    "expect-custom-schema",
     "materialization",
     "Models must target a custom schema, not the default.",
 )
@@ -74,7 +74,7 @@ def custom_schema_required(ctx: ProjectContext, rule: RuleConfig) -> Iterable[Vi
 
 
 @register(
-    "max-ephemeral-models",
+    "expect-max-ephemeral-models",
     "materialization",
     "The project may not exceed N ephemeral models.",
     config_keys={"max": "maximum number of ephemeral models (default: 5)"},

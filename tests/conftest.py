@@ -14,7 +14,7 @@ FIXTURE = Path(__file__).parent / "fixtures" / "demo_project"
 
 @pytest.fixture
 def ctx() -> ProjectContext:
-    config = load_config(FIXTURE / "dbt_arch_unit.yaml")
+    config = load_config(FIXTURE / "dbt_arch.yaml")
     config.project.dir = str(FIXTURE)
     manifest = load_manifest(FIXTURE / "target" / "manifest.json")
     return ProjectContext(config, manifest)

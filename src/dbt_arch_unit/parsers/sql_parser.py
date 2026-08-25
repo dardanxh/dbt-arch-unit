@@ -58,6 +58,22 @@ class ParsedSql:
         return count
 
     @cached_property
+    def line_comments(self) -> list[str]:
+        """Text of each `-- ...` comment (marker stripped). Regex over raw SQL, so a
+        `--` inside a string literal is a rare false positive."""
+        return [m.group(0)[2:].strip() for m in _LINE_COMMENT.finditer(self.raw)]
+
+    @cached_property
+    def block_comments(self) -> list[str]:
+        """Text of each `/* ... */` comment (delimiters stripped)."""
+        return [m.group(0)[2:-2].strip() for m in _BLOCK_COMMENT.finditer(self.raw)]
+
+    @cached_property
+    def comments(self) -> list[str]:
+        """All comments (line + block), delimiters stripped."""
+        return self.line_comments + self.block_comments
+
+    @cached_property
     def cte_names(self) -> list[str]:
         return [m.lower() for m in _CTE.findall(self.clean)]
 

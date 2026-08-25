@@ -12,7 +12,7 @@ from dbt_arch_unit.violation import Violation
 
 
 @register(
-    "model-has-description",
+    "expect-model-has-description",
     "documentation",
     "Every model must have a non-empty description.",
 )
@@ -23,7 +23,7 @@ def model_has_description(ctx: ProjectContext, rule: RuleConfig) -> Iterable[Vio
 
 
 @register(
-    "column-has-description",
+    "expect-column-has-description",
     "documentation",
     "Model columns must be documented (all columns, or just primary-key columns).",
     config_keys={"scope": "'all' or 'primary_key' (default: all)"},
@@ -51,7 +51,7 @@ def _pk_columns(ctx: ProjectContext, model: Node) -> set[str]:
 
 
 @register(
-    "exposure-has-owner",
+    "expect-exposure-has-owner",
     "documentation",
     "Every exposure must declare an owner and reference existing nodes.",
 )
@@ -68,7 +68,7 @@ def exposure_has_owner(ctx: ProjectContext, rule: RuleConfig) -> Iterable[Violat
 
 
 @register(
-    "model-has-owner-meta",
+    "expect-model-has-owner-meta",
     "documentation",
     "Every model must declare an owner in its meta.",
     config_keys={"key": "the meta key that must be present (default: owner)"},

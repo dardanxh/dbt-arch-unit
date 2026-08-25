@@ -11,7 +11,46 @@ from dbt_arch_unit.violation import Violation
 
 
 @register(
-    "max-lines-of-code",
+    "expect-comments",
+    "style",
+    "SQL comments must follow the configured policy.",
+    source="file",
+    config_keys={
+        "allowed": "are comments permitted at all (default: true)",
+        "max_length": "max characters allowed in a single comment",
+        "allow_block": "permit /* */ block comments (default: true)",
+        "forbid": "forbidden substrings, e.g. [TODO, FIXME] (case-insensitive)",
+    },
+)
+def comments(ctx: ProjectContext, rule: RuleConfig) -> Iterable[Violation]:
+    allowed = rule.config.get("allowed", True)
+    allow_block = rule.config.get("allow_block", True)
+    max_length = rule.config.get("max_length")
+    forbid = [f.lower() for f in rule.config.get("forbid", [])]
+    for model in ctx.models_for(rule):
+        sql = ctx.sql(model)
+        all_comments = sql.comments
+        if not allowed:
+            if all_comments:
+                n = len(all_comments)
+                yield ctx.violation(rule, model, f"comments are not allowed ({n} found)")
+            continue
+        if not allow_block and sql.block_comments:
+            yield ctx.violation(rule, model, "block comments (/* */) are not allowed")
+        for comment in all_comments:
+            if max_length is not None and len(comment) > max_length:
+                snippet = comment[:30] + ("…" if len(comment) > 30 else "")
+                yield ctx.violation(
+                    rule, model, f"comment exceeds {max_length} chars ({len(comment)}): '{snippet}'"
+                )
+            low = comment.lower()
+            for bad in forbid:
+                if bad in low:
+                    yield ctx.violation(rule, model, f"comment contains forbidden '{bad}'")
+
+
+@register(
+    "expect-max-lines-of-code",
     "style",
     "A model's SQL must not exceed a maximum line count.",
     source="file",
@@ -27,7 +66,7 @@ def max_lines_of_code(ctx: ProjectContext, rule: RuleConfig) -> Iterable[Violati
 
 
 @register(
-    "max-columns",
+    "expect-max-columns",
     "style",
     "A model's outermost SELECT may not project more than N columns.",
     source="file",
@@ -42,7 +81,7 @@ def max_columns(ctx: ProjectContext, rule: RuleConfig) -> Iterable[Violation]:
 
 
 @register(
-    "no-select-star",
+    "expect-no-select-star",
     "style",
     "Models must not use `select *` in their final projection.",
     source="file",
@@ -56,7 +95,7 @@ def no_select_star(ctx: ProjectContext, rule: RuleConfig) -> Iterable[Violation]
 
 
 @register(
-    "max-ctes",
+    "expect-max-ctes",
     "style",
     "A model may not contain more than N CTEs.",
     source="file",
@@ -71,7 +110,7 @@ def max_ctes(ctx: ProjectContext, rule: RuleConfig) -> Iterable[Violation]:
 
 
 @register(
-    "max-joins",
+    "expect-max-joins",
     "style",
     "A model may not contain more than N joins.",
     source="file",
@@ -86,7 +125,7 @@ def max_joins(ctx: ProjectContext, rule: RuleConfig) -> Iterable[Violation]:
 
 
 @register(
-    "require-ref-not-hardcoded",
+    "expect-no-hardcoded-refs",
     "style",
     "Models must reference tables via ref()/source(), not hardcoded schema.table.",
     source="file",
@@ -100,7 +139,7 @@ def require_ref_not_hardcoded(ctx: ProjectContext, rule: RuleConfig) -> Iterable
 
 
 @register(
-    "no-cross-database-refs",
+    "expect-no-cross-database-refs",
     "style",
     "Models must not reference fully database-qualified identifiers.",
     source="file",
@@ -113,7 +152,7 @@ def no_cross_database_refs(ctx: ProjectContext, rule: RuleConfig) -> Iterable[Vi
 
 
 @register(
-    "require-import-cte-structure",
+    "expect-import-cte-structure",
     "style",
     "Multi-ref models should use import CTEs rather than inline references.",
     source="file",

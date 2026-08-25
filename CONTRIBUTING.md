@@ -36,7 +36,7 @@ uv run pre-commit install
 src/dbt_arch_unit/
   models/manifest.py   # typed view of dbt's manifest.json
   parsers/             # manifest loader + raw-SQL fact extraction
-  config.py            # the dbt_arch_unit.yaml contract (pydantic)
+  config.py            # the dbt_arch.yaml contract (pydantic)
   context.py           # ProjectContext: layers, selectors, cached SQL, test indexes
   rules/               # one module per category, one function per rule
   runner.py reporting.py html_report.py cli.py scaffold.py
@@ -53,7 +53,7 @@ Rules are small, self-contained functions registered by name. To add one:
 
    ```python
    @register(
-       "no-select-star",
+       "expect-no-select-star",
        "style",
        "Models must not use `select *` in their final projection.",
        source="file",  # "manifest" | "file" | "both"

@@ -6,21 +6,23 @@ MARTS = ["models/marts/**"]
 
 def test_materialization_by_layer(run):
     allow = {"staging": ["view"], "marts": ["table"]}
-    assert run("materialization-by-layer", config={"allow": allow}) == {M + "stg_orders"}
+    assert run("expect-materialization-by-layer", config={"allow": allow}) == {M + "stg_orders"}
 
 
 def test_incremental_requires_keys(run):
-    assert run("incremental-requires-keys") == {M + "rpt_revenue"}
+    assert run("expect-incremental-keys") == {M + "rpt_revenue"}
 
 
 def test_require_tags_by_layer(run):
-    got = run("require-tags-by-layer", include=MARTS, config={"required": {"marts": ["governed"]}})
+    got = run(
+        "expect-tags-by-layer", include=MARTS, config={"required": {"marts": ["governed"]}}
+    )
     assert got == {M + "fct_orders", M + "orders_summary"}
 
 
 def test_custom_schema_required(run):
-    assert run("custom-schema-required") == {M + "orders_summary"}
+    assert run("expect-custom-schema") == {M + "orders_summary"}
 
 
 def test_max_ephemeral_models_none(run):
-    assert run("max-ephemeral-models", config={"max": 0}) == set()
+    assert run("expect-max-ephemeral-models", config={"max": 0}) == set()

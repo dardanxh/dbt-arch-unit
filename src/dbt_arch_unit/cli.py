@@ -74,7 +74,7 @@ def _load_and_run(
 @app.command()
 def check(
     config: Annotated[
-        Path | None, typer.Option("--config", "-c", help="Path to dbt_arch_unit.yaml.")
+        Path | None, typer.Option("--config", "-c", help="Path to dbt_arch.yaml.")
     ] = None,
     project_dir: Annotated[
         Path | None, typer.Option("--project-dir", help="Override project.dir.")
@@ -115,7 +115,7 @@ def report(
         Path, typer.Option("--output", "-o", help="Path to write the HTML report.")
     ] = Path("dbt_arch_unit_report.html"),
     config: Annotated[
-        Path | None, typer.Option("--config", "-c", help="Path to dbt_arch_unit.yaml.")
+        Path | None, typer.Option("--config", "-c", help="Path to dbt_arch.yaml.")
     ] = None,
     project_dir: Annotated[
         Path | None, typer.Option("--project-dir", help="Override project.dir.")
@@ -200,7 +200,7 @@ def init(
     path: Annotated[Path | None, typer.Option("--path", help="Where to write the config.")] = None,
     force: Annotated[bool, typer.Option("--force", help="Overwrite an existing config.")] = False,
 ) -> None:
-    """Verify this is a dbt project, then scaffold a tailored dbt_arch_unit.yaml."""
+    """Verify this is a dbt project, then scaffold a tailored dbt_arch.yaml."""
     inspection = inspect_dbt_project(project_dir)
 
     console.print(f"[bold]Inspecting dbt project at[/] {inspection.project_dir}")

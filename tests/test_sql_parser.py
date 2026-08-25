@@ -42,3 +42,16 @@ def test_hardcoded_and_cross_db_refs():
 def test_jinja_ref_not_hardcoded():
     sql = "select * from {{ ref('stg_orders') }}"
     assert ParsedSql(sql).hardcoded_refs == []
+
+
+def test_comment_extraction():
+    sql = "-- TODO: fix later\nselect 1 /* inline note */ from t -- trailing\n"
+    parsed = ParsedSql(sql)
+    assert parsed.line_comments == ["TODO: fix later", "trailing"]
+    assert parsed.block_comments == ["inline note"]
+    assert parsed.comments == ["TODO: fix later", "trailing", "inline note"]
+
+
+def test_no_comments():
+    parsed = ParsedSql("select 1 from t\n")
+    assert parsed.comments == []

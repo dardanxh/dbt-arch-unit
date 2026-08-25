@@ -32,7 +32,7 @@ def _edges(chains: list[str]) -> set[tuple[str, str]]:
 
 
 @register(
-    "test-dependencies",
+    "expect-dependencies",
     "dependencies",
     "Layer dependencies must follow allow-listed flow chains (and avoid denied ones).",
     config_keys={
@@ -63,27 +63,29 @@ def test_dependencies(ctx: ProjectContext, rule: RuleConfig) -> Iterable[Violati
 
 
 @register(
-    "forbidden-dependencies",
+    "expect-max-models-per-layer",
     "dependencies",
-    "Explicit deny-list of (from_layer, to_layer) dependency pairs.",
-    config_keys={"deny": "list of [from_layer, to_layer] pairs that are forbidden"},
+    "A layer may contain at most N models. Use scope/ignore to pick which layers.",
+    config_keys={"max": "maximum models allowed in a layer (default: 50)"},
 )
-def forbidden_dependencies(ctx: ProjectContext, rule: RuleConfig) -> Iterable[Violation]:
-    deny = {(a, b) for a, b in rule.config.get("deny", [])}
-    for model in ctx.models_for(rule):
+def max_models_per_layer(ctx: ProjectContext, rule: RuleConfig) -> Iterable[Violation]:
+    limit = rule.config.get("max", 50)
+    counts: dict[str, int] = {}
+    for model in ctx.models_for(rule):  # scope/ignore already applied here
         layer = ctx.layer_of_node(model)
-        for parent in model.depends_on.nodes:
-            player = ctx.layer_for_id(parent)
-            if layer and player and (layer, player) in deny:
-                yield ctx.violation(
-                    rule, model, f"forbidden dependency '{layer}' -> '{player}' ({parent})"
-                )
+        if layer is not None:
+            counts[layer] = counts.get(layer, 0) + 1
+    for layer, count in sorted(counts.items()):
+        if count > limit:
+            yield ctx.violation(
+                rule, f"layer:{layer}", f"layer '{layer}' has {count} models, exceeds max {limit}"
+            )
 
 
 @register(
-    "sources-only-in-staging",
+    "expect-sources-single-reader",
     "dependencies",
-    "Raw sources may only be referenced by the staging layer.",
+    "Raw sources may only be referenced by one designated layer (default: staging).",
     config_keys={"layer": "the single layer allowed to read sources (default: staging)"},
 )
 def sources_only_in_staging(ctx: ProjectContext, rule: RuleConfig) -> Iterable[Violation]:
@@ -98,9 +100,11 @@ def sources_only_in_staging(ctx: ProjectContext, rule: RuleConfig) -> Iterable[V
 
 
 @register(
-    "staging-one-source",
+    "expect-single-source-per-model",
     "dependencies",
-    "Each staging model references exactly one source and no other models.",
+    "Each model in the source-reading layer references exactly one source and no models "
+    "(default layer: staging).",
+    config_keys={"layer": "the source-reading layer to check (default: staging)"},
 )
 def staging_one_source(ctx: ProjectContext, rule: RuleConfig) -> Iterable[Violation]:
     for model in ctx.models_for(rule):
@@ -118,7 +122,7 @@ def staging_one_source(ctx: ProjectContext, rule: RuleConfig) -> Iterable[Violat
 
 
 @register(
-    "no-orphan-models",
+    "expect-no-orphan-models",
     "dependencies",
     "Every model must be consumed by another model or an exposure.",
     config_keys={"allow_tags": "tags marking intentionally-terminal models"},
@@ -139,7 +143,7 @@ def no_orphan_models(ctx: ProjectContext, rule: RuleConfig) -> Iterable[Violatio
 
 
 @register(
-    "max-fan-in",
+    "expect-max-fan-in",
     "dependencies",
     "A model may not have more than N direct parents.",
     config_keys={"max": "maximum number of direct parents (default: 10)"},
@@ -153,7 +157,7 @@ def max_fan_in(ctx: ProjectContext, rule: RuleConfig) -> Iterable[Violation]:
 
 
 @register(
-    "max-fan-out",
+    "expect-max-fan-out",
     "dependencies",
     "A model may not have more than N direct model children.",
     config_keys={"max": "maximum number of direct children (default: 20)"},
@@ -171,7 +175,7 @@ def max_fan_out(ctx: ProjectContext, rule: RuleConfig) -> Iterable[Violation]:
 
 
 @register(
-    "no-cross-domain-refs",
+    "expect-no-cross-domain-refs",
     "dependencies",
     "Models may only reference another domain through the boundary layer.",
     config_keys={
@@ -204,7 +208,7 @@ def no_cross_domain_refs(ctx: ProjectContext, rule: RuleConfig) -> Iterable[Viol
 
 
 @register(
-    "max-dependency-depth",
+    "expect-max-dependency-depth",
     "dependencies",
     "The longest path from a source to a model may not exceed N.",
     config_keys={"max": "maximum dependency depth (default: 5)"},
@@ -233,7 +237,7 @@ def max_dependency_depth(ctx: ProjectContext, rule: RuleConfig) -> Iterable[Viol
 
 
 @register(
-    "no-model-cycles",
+    "expect-no-model-cycles",
     "dependencies",
     "The model dependency graph must be acyclic.",
 )

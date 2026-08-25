@@ -1,6 +1,6 @@
 - id: dbt-arch-unit
   name: dbt architecture unit tests
-  description: Enforce dbt architecture rules declared in dbt_arch_unit.yaml
+  description: Enforce dbt architecture rules declared in dbt_arch.yaml
   entry: dbt-arch-unit check
   language: python
   pass_filenames: false

@@ -14,7 +14,7 @@ from dbt_arch_unit.runner import run
 
 runner = CliRunner()
 FIXTURE = Path(__file__).parent / "fixtures" / "demo_project"
-CONFIG = FIXTURE / "dbt_arch_unit.yaml"
+CONFIG = FIXTURE / "dbt_arch.yaml"
 
 
 def _run():
@@ -43,7 +43,7 @@ def test_render_html_contains_sections():
     assert "Architecture check FAILED" in html
     assert "Issues by category" in html
     assert "% models affected" in html
-    assert "no-select-star" in html
+    assert "expect-no-select-star" in html
     assert "2026-01-01" in html
 
 
