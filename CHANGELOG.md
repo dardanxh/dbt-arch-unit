@@ -6,6 +6,19 @@ from [Conventional Commits](https://www.conventionalcommits.org) — do not edit
 
 <!-- version list -->
 
+## v0.1.2 (2026-08-25)
+
+### Bug Fixes
+
+- Lower minimum Python to 3.10 for broader compatibility
+  ([`511f721`](https://github.com/dardanxh/dbt-arch-unit/commit/511f721c296c58e7277721b19ccbff0a411f97a7))
+
+### Continuous Integration
+
+- Run semantic-release directly with pinned gitpython<3.1.45
+  ([`54336fa`](https://github.com/dardanxh/dbt-arch-unit/commit/54336fa8ead298cca67220bed5b84e3a466bfef4))
+
+
 ## v0.1.1 (2026-08-23)
 
 ### Bug Fixes

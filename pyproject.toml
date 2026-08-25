@@ -1,6 +1,6 @@
 [project]
 name = "dbt-arch-unit"
-version = "0.1.1"
+version = "0.1.2"
 description = "Architectural unit testing for dbt projects — enforce your team's dbt conventions in CI and pre-commit."
 readme = "README.md"
 requires-python = ">=3.10"
