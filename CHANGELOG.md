@@ -6,6 +6,17 @@ from [Conventional Commits](https://www.conventionalcommits.org) — do not edit
 
 <!-- version list -->
 
+## v1.0.0 (2026-08-25)
+
+### Features
+
+- Overhaul rules & config — expect-* naming, layer scoping, new checks, leaner init
+  ([`236f5e6`](https://github.com/dardanxh/dbt-arch-unit/commit/236f5e6bdfaf284aa7b620df5d1efe7f7ea7879c))
+
+- Replace layer-dependencies map with arrow-chain test-dependencies rule
+  ([`ff30a26`](https://github.com/dardanxh/dbt-arch-unit/commit/ff30a260700d2dffe568273a907585db9409a3b4))
+
+
 ## v0.1.2 (2026-08-25)
 
 ### Bug Fixes
