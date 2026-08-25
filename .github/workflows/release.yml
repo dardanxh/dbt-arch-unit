@@ -29,11 +29,34 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      # Run python-semantic-release directly (not the Docker action) so we can pin
+      # gitpython<3.1.45 — 3.1.45 removed Actor.name_email_regex, which current PSR
+      # still references (crashes with "type object 'Actor' has no attribute ...").
       - name: Python Semantic Release
         id: release
-        uses: python-semantic-release/python-semantic-release@v9
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          before=$(git describe --tags --abbrev=0 2>/dev/null || echo none)
+          uvx --with 'gitpython<3.1.45' --from 'python-semantic-release==10.6.1' \
+            semantic-release -v version
+          after=$(git describe --tags --abbrev=0 2>/dev/null || echo none)
+          if [ "$before" != "$after" ]; then
+            echo "released=true" >> "$GITHUB_OUTPUT"
+            echo "tag=$after" >> "$GITHUB_OUTPUT"
+            echo "Released $after"
+          else
+            echo "released=false" >> "$GITHUB_OUTPUT"
+            echo "No release required"
+          fi
 
   publish:
     needs: release
