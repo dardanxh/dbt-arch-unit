@@ -6,7 +6,7 @@ rules, bug fixes, docs — are very welcome.
 
 ## Development setup
 
-You need [uv](https://docs.astral.sh/uv/) and Python 3.13+.
+You need [uv](https://docs.astral.sh/uv/) and Python 3.10+.
 
 ```bash
 git clone https://github.com/dardanxh/dbt-arch-unit

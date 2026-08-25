@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import StrEnum
+from enum import Enum
 
 
-class Severity(StrEnum):
+class Severity(str, Enum):
+    # str-Enum (not enum.StrEnum) to keep compatibility with Python 3.10.
     ERROR = "error"
     WARNING = "warning"
+
+    def __str__(self) -> str:
+        return self.value
 
 
 @dataclass(frozen=True)
